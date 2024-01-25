@@ -206,6 +206,19 @@ int main(int argc, char* argv[])
 			break;
 		}
 
+		/*
+		*
+		* HERE WE WILL HAVE TO RETRIEVE THE FILE FROM DISK
+		* 
+		* THEN SEND THE FILE METADETA
+		* 
+		* THEN BREAK FILE INTO PIECES
+		* 
+		* THEN FINALLY SEND THE PIECES
+		* 
+		*/
+
+
 		// send and receive packets
 
 		sendAccumulator += DeltaTime;
@@ -217,6 +230,18 @@ int main(int argc, char* argv[])
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
 		}
+
+		/*
+		*
+		* HERE WE WILL RECIEVE THE FILE METADATA
+		* 
+		* THEN THE PIECES
+		* 
+		* WE WILL THEN WRITE THE PIECES TO DISK
+		* 
+		* AND FINALLY VERIFY THE FILE INTEGRITY 
+		* 
+		*/
 
 		while (true)
 		{
