@@ -1,0 +1,6 @@
+.vs/ 
+*.exe
+*.dll
+*.o
+*.user
+*.filters
