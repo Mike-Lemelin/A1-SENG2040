@@ -127,19 +127,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LoadFile.cpp" />
-    <ClCompile Include="Receiver.cpp" />
     <ClCompile Include="ReliableUDP.cpp" />
-    <ClCompile Include="Sender.cpp" />
-    <ClCompile Include="SENG2040-A1.cpp" />
-    <ClCompile Include="VerifyFile.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LoadFile.h" />
+    <ClInclude Include="CRC.h" />
     <ClInclude Include="Net.h" />
-    <ClInclude Include="Receiver.h" />
-    <ClInclude Include="Sender.h" />
-    <ClInclude Include="VerifyFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

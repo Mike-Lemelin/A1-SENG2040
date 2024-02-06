@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Net.h"
+#include "CRC.h"
 
 //#define SHOW_ACKS
 
