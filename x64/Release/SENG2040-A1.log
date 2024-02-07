@@ -1,0 +1,11 @@
+﻿  ReliableUDP.cpp
+C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\SENG2040-A1\Net.h(194,21): warning C4244: '=': conversion from 'SOCKET' to 'int', possible loss of data
+C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\SENG2040-A1\Net.h(914,29): warning C4244: '/=': conversion from 'float' to 'int', possible loss of data
+C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\SENG2040-A1\Net.h(915,30): warning C4244: '/=': conversion from 'float' to 'int', possible loss of data
+C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\SENG2040-A1\ReliableUDP.cpp(217,45): warning C4244: '=': conversion from 'std::streamsize' to 'int', possible loss of data
+  Generating code
+  86 of 394 functions (21.8%) were compiled, the rest were copied from previous compilation.
+    13 functions were new in current compilation
+    24 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  SENG2040-A1.vcxproj -> C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\SENG2040-A1\x64\Release\SENG2040-A1.exe

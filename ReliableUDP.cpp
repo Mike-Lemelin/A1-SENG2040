@@ -12,10 +12,12 @@
 #include "Net.h"
 #include "CRC.h"
 
-//#define SHOW_ACKS
+#pragma warning(disable:4996)
 
 using namespace std;
 using namespace net;
+
+//#define SHOW_ACKS
 
 const int ServerPort = 30000;
 const int ClientPort = 30001;
@@ -24,6 +26,13 @@ const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
 const int PacketSize = 256;
+
+// Structure to hold file metadata
+struct FileMetadata 
+{
+	string filename;
+	streamsize fileSize;
+};
 
 class FlowControl
 {
@@ -130,23 +139,40 @@ int main(int argc, char* argv[])
 	Mode mode = Server;
 	Address address;
 
+	string filename;
+
 	/*
 	*
 	* HERE WE HAVE TO RETRIEVE ADDITIONAL COMMAND LINE ARGUMENTS
 	* 
 	*/
 
-	if (argc >= 2)
+	if (argc == 3)
 	{
 		int a, b, c, d;
 
-#pragma warning(suppress : 4996)
 		if (sscanf(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
 		}
+
+		filename = argv[2];
 	}
+	else if (argc == 1)
+	{
+		mode = Server;
+	}
+	else
+	{
+		printf("Usage: program_name IP_address filename\n");
+		printf("Description: This program sends a file to the specified IP address over the network.\n");
+		printf("Arguments:\n");
+		printf("  - IP_address: The IP address of the destination.\n");
+		printf("  - filename: The name of the file to send.\n");
+		return 0;
+	}
+
 
 	// initialize
 
@@ -167,9 +193,43 @@ int main(int argc, char* argv[])
 	}
 
 	if (mode == Client)
+	{
 		connection.Connect(address);
+
+		// Open file
+		ifstream file(filename.c_str());
+
+		if (file.is_open())
+		{
+			cout << "File opened successfully" << endl;
+
+			// Get file size
+			file.seekg(0, ios::end);
+			streamsize fileSize = file.tellg();
+			file.seekg(0, ios::beg);
+
+			// Chunk size
+			const int chunkSize = 256;
+
+			// Calculate number of chunks
+			int numOfChunks = (fileSize + chunkSize - 1) / chunkSize;
+
+			// Create buffer for chunk
+			vector<char> chunk(chunkSize);
+
+
+		}
+		else
+		{
+			// Failed to open file
+			cerr << "Failed to open file: " << strerror(errno) << " " << filename << endl;
+			return 1;
+		}
+	}
 	else
+	{
 		connection.Listen();
+	}
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
@@ -207,19 +267,6 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		/*
-		*
-		* HERE WE WILL HAVE TO RETRIEVE THE FILE FROM DISK
-		* 
-		* THEN SEND THE FILE METADETA
-		* 
-		* THEN BREAK FILE INTO PIECES
-		* 
-		* THEN FINALLY SEND THE PIECES
-		* 
-		*/
-
-
 		// send and receive packets
 
 		sendAccumulator += DeltaTime;
@@ -228,21 +275,10 @@ int main(int argc, char* argv[])
 		{
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
+			
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
 		}
-
-		/*
-		*
-		* HERE WE WILL RECIEVE THE FILE METADATA
-		* 
-		* THEN THE PIECES
-		* 
-		* WE WILL THEN WRITE THE PIECES TO DISK
-		* 
-		* AND FINALLY VERIFY THE FILE INTEGRITY 
-		* 
-		*/
 
 		while (true)
 		{
@@ -303,4 +339,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
