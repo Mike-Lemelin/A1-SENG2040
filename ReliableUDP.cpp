@@ -116,10 +116,60 @@ private:
 };
 
 // ----------------------------------------------
+// creating a struct for parsing command line arguments 
+struct CommandLineArg
+{
+	string mode;
+	string filePath;
+	string checksumMethod = "CRC32";
+	string defaultAddress = "127.0.0.1";
+	int defaultPort = 30000;
+
+	// or initialize a constructor here with the default values 
+	CommandLineArg(int argc, char* argv[])
+	{ 
+		// Function to parseArgs(argc, argv);
+	
+	}
+
+private: 
+	void parseArgs() 
+	{
+		// for loop for each argument on the command line 
+			// add handlers for mode argument 
+			// add file handler 
+			// add crc handler 
+			// add default ip address handler 
+			// add default port handler 
+	}
+
+	void handleMode() {}
+	void handleFile() {} 
+	void handleChecksum() {}
+	void handleAddress() {}
+	void handlePort() {}
+	
+};
+
+// ------------------------------------------------------
+// creating struct for FileMetadata 
+struct FileMetadata 
+{
+	char fileName[256];
+	uint32_t fileSize;
+	uint32_t crc;
+
+	// methods such as getting the file metadata from file by using the file path 
+	// reading file size and compute the CRC 
+	// convert between FileMetadata and byte array for manual byte array manipulation ? 
+
+};
 
 int main(int argc, char* argv[])
 {
 	// parse command line
+	// creat instance of CommanLineArg constructor 
+	CommandLineArg arguments(argc, argv);
 
 	enum Mode
 	{
@@ -133,6 +183,11 @@ int main(int argc, char* argv[])
 	/*
 	*
 	* HERE WE HAVE TO RETRIEVE ADDITIONAL COMMAND LINE ARGUMENTS
+	* If Condition for mode == client 
+	*	{ after serialization of metadata send file data }
+	* else if mode == server 
+	*	{ receive file metadata and associated data }
+	* return 0;
 	* 
 	*/
 
