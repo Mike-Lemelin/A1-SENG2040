@@ -12,6 +12,8 @@
 #include "Net.h"
 #include "CRC.h"
 
+#pragma warning(disable : 4996)
+
 //#define SHOW_ACKS
 
 using namespace std;
@@ -115,25 +117,25 @@ private:
 	float penalty_reduction_accumulator;
 };
 
-// ----------------------------------------------
+// ----------------------------------------------------
 // creating a struct for parsing command line arguments 
 struct CommandLineArg
 {
-	string mode;
+	string mode = "Server"; // Default mode
 	string filePath;
 	string checksumMethod = "CRC32";
-	string defaultAddress = "127.0.0.1";
-	int defaultPort = 30000;
+	string address = "127.0.0.1"; // Default address
+	int port = 30000; // Default port
 
 	// or initialize a constructor here with the default values 
 	CommandLineArg(int argc, char* argv[])
-	{ 
-		// Function to parseArgs(argc, argv);
-	
+	{
+		parseArgs(argc, argv);
 	}
 
 private: 
-	void parseArgs() 
+
+	void parseArgs(int argc, char* argv[])
 	{
 		// for loop for each argument on the command line 
 			// add handlers for mode argument 
@@ -141,14 +143,42 @@ private:
 			// add crc handler 
 			// add default ip address handler 
 			// add default port handler 
+		for (int i = 1; i < argc; ++i)
+		{
+			string arg = argv[i];
+
+			if (arg == "-m")
+			{
+				mode = getNextArg(argc, argv, i);
+			}
+			else if (arg == "-f" && mode != "Server") // Skip parsing file path for server mode
+			{
+				filePath = getNextArg(argc, argv, i);
+			}
+			else if (arg == "-a")
+			{
+				address = getNextArg(argc, argv, i);
+			}
+			else if (arg == "-p")
+			{
+				string portStr = getNextArg(argc, argv, i);
+				port = stoi(portStr);
+			}
+		}
 	}
 
-	void handleMode() {}
-	void handleFile() {} 
-	void handleChecksum() {}
-	void handleAddress() {}
-	void handlePort() {}
-	
+	string getNextArg(int argc, char* argv[], int& index)
+	{
+		if (index + 1 < argc)
+		{
+			return argv[++index];
+		}
+		else
+		{
+			cerr << "Missing argument for option: " << argv[index] << endl;
+			exit(1);
+		}
+	}
 };
 
 // ------------------------------------------------------
@@ -168,8 +198,13 @@ struct FileMetadata
 int main(int argc, char* argv[])
 {
 	// parse command line
-	// creat instance of CommanLineArg constructor 
+	// create instance of CommanLineArg constructor 
 	CommandLineArg arguments(argc, argv);
+
+	cout << "Mode: " << arguments.mode << endl;
+	cout << "File Path: " << arguments.filePath << endl;
+	cout << "Address: " << arguments.address << endl;
+	cout << "Port: " << arguments.port << endl;
 
 	enum Mode
 	{
@@ -191,15 +226,22 @@ int main(int argc, char* argv[])
 	* 
 	*/
 
-	if (argc >= 2)
+	if (arguments.mode == "Client")
 	{
+		mode = Client;
 		int a, b, c, d;
-
-#pragma warning(suppress : 4996)
-		if (sscanf(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
+		if (sscanf(arguments.address.c_str(), "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
-			mode = Client;
-			address = Address(a, b, c, d, ServerPort);
+			address = Address(a, b, c, d, arguments.port);
+		}
+	}
+	else if (arguments.mode == "Server")
+	{
+		mode = Server;
+		int a, b, c, d;
+		if (sscanf(arguments.address.c_str(), "%d.%d.%d.%d", &a, &b, &c, &d))
+		{
+			address = Address(a, b, c, d, arguments.port);
 		}
 	}
 
@@ -221,10 +263,15 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	if (mode == Client)
+	if (mode == Client) 
+	{
 		connection.Connect(address);
+	}
 	else
+	{
 		connection.Listen();
+	}
+		
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
