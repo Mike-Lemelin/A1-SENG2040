@@ -270,6 +270,21 @@ private:
 		CRC = crc;
 	}
 
+public:
+	// serialization method by taking metadata and inserting into byte vector 
+	vector<unsigned char> serializeMetadata(const FileMetadata& metadata)
+	{
+		vector<unsigned char> buffer;
+
+		// need to store 32-bit ints into 4 bytes and store into byte vector 
+		for (int i = 0; i <  sizeof(uint32_t); ++i)
+		{
+			// use shift operator to shift counter i * 8 bits to right 
+			// use 0xFF as a mask to isolate right side byte to append to buffer
+			unsigned char byte = (metadata.fileSize >> (i * 8)) & 0xFF;
+			buffer.push_back(byte);
+		}
+	}
 
 	// methods such as getting the file metadata from file by using the file path 
 	// reading file size and compute the CRC 
