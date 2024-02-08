@@ -14,6 +14,10 @@
 
 #pragma warning(disable : 4996)
 
+#define VOID "void"
+#define CLIENT "Client"
+#define SERVER "Server"
+
 //#define SHOW_ACKS
 
 using namespace std;
@@ -151,7 +155,7 @@ private:
 			{
 				mode = getNextArg(argc, argv, i);
 			}
-			else if (arg == "-f" && mode != "Server") // Skip parsing file path for server mode
+			else if (arg == "-f" && mode != SERVER) // Skip parsing file path for server mode
 			{
 				filePath = getNextArg(argc, argv, i);
 			}
@@ -163,6 +167,18 @@ private:
 			{
 				string portStr = getNextArg(argc, argv, i);
 				port = stoi(portStr);
+			}
+			else if(arg == "-h")
+			{
+				printf("Usage: SENG2040-A1 -m <mode> -f <file_path> -a <address> -p <port>\n");
+				printf("Arguments:\n");
+				printf("  -m <mode>: Specify the mode of operation (server or client).\n");
+				printf("  -f <file_path>: Specify the path to the file (required for client mode).\n");
+				printf("  -a <address>: Specify the IP address of the destination.\n");
+				printf("  -p <port>: Specify the port number.\n");
+				printf("  -h Display usage.\n");
+
+				mode = VOID; // End program if user chooses to display usage
 			}
 		}
 	}
@@ -176,7 +192,8 @@ private:
 		else
 		{
 			cerr << "Missing argument for option: " << argv[index] << endl;
-			exit(1);
+			mode = VOID; // End program by setting mode to VOID
+			return VOID; // Return void for whatever switch is missing an argument
 		}
 	}
 };
@@ -187,13 +204,81 @@ struct FileMetadata
 {
 	char fileName[256];
 	uint32_t fileSize;
-	uint32_t crc;
+	uint32_t CRC;
+
+	FileMetadata(const string& filePath)
+	{
+		getMetadata(filePath);
+		calculateCRC(filePath);
+	}
+
+private:
+
+	void getMetadata(const string& filePath)
+	{
+		// Open the file
+		ifstream file(filePath, ios::binary);
+
+		if (!file.is_open()) 
+		{
+			cerr << "Error opening file: " << filePath << endl;
+			exit(1);
+			// Set default values for metadata
+			strcpy(fileName, "");
+			fileSize = 0;
+		}
+
+		// Get the file name
+		const char* lastSlash = strrchr(filePath.c_str(), '\\');
+
+		if (lastSlash == nullptr) 
+		{
+			lastSlash = fileName;
+		}
+		else 
+		{
+			lastSlash++;
+		}
+		strcpy(fileName, lastSlash);
+
+		// Get the file size
+		file.seekg(0, ios::end);
+		fileSize = file.tellg();
+		file.seekg(0, ios::beg);
+
+		// Close the file
+		file.close();
+	}
+
+	void calculateCRC(const string& filePath)
+	{
+		// Open the file
+		ifstream file(filePath, ios::binary);
+
+		if (!file.is_open()) 
+		{
+			cerr << "Error opening file: " << filePath << endl;
+			exit(1);
+		}
+
+		// Read file contents into a buffer
+		vector<char> buffer(std::istreambuf_iterator<char>(file), {});
+
+		// Calculate CRC
+		uint32_t crc = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
+
+		CRC = crc;
+	}
+
 
 	// methods such as getting the file metadata from file by using the file path 
 	// reading file size and compute the CRC 
 	// convert between FileMetadata and byte array for manual byte array manipulation ? 
 
 };
+
+
+
 
 int main(int argc, char* argv[])
 {
@@ -226,7 +311,11 @@ int main(int argc, char* argv[])
 	* 
 	*/
 
-	if (arguments.mode == "Client")
+	if (arguments.mode == VOID)
+	{
+		return 0;
+	}
+	else if (arguments.mode == CLIENT)
 	{
 		mode = Client;
 		int a, b, c, d;
@@ -234,8 +323,13 @@ int main(int argc, char* argv[])
 		{
 			address = Address(a, b, c, d, arguments.port);
 		}
+
+		FileMetadata metadata(arguments.filePath);
+		cout << "File name " << metadata.fileName << endl;
+		cout << "File size " << metadata.fileSize << endl;
+		cout << "CRC: " << metadata.CRC << endl;
 	}
-	else if (arguments.mode == "Server")
+	else if (arguments.mode == SERVER)
 	{
 		mode = Server;
 		int a, b, c, d;
@@ -243,6 +337,8 @@ int main(int argc, char* argv[])
 		{
 			address = Address(a, b, c, d, arguments.port);
 		}
+
+		// Receive metadata and file data
 	}
 
 	// initialize
