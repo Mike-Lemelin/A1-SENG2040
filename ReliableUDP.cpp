@@ -250,26 +250,6 @@ private:
 		file.close();
 	}
 
-	void calculateCRC(const string& filePath)
-	{
-		// Open the file
-		ifstream file(filePath, ios::binary);
-
-		if (!file.is_open()) 
-		{
-			cerr << "Error opening file: " << filePath << endl;
-			exit(1);
-		}
-
-		// Read file contents into a buffer
-		vector<char> buffer(std::istreambuf_iterator<char>(file), {});
-
-		// Calculate CRC
-		uint32_t crc = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
-
-		CRC = crc;
-	}
-
 public:
 	// serialization method by taking metadata and inserting into byte vector 
 	vector<unsigned char> serializeMetadata(const FileMetadata& metadata)
@@ -284,6 +264,26 @@ public:
 			unsigned char byte = (metadata.fileSize >> (i * 8)) & 0xFF;
 			buffer.push_back(byte);
 		}
+	}
+
+	void calculateCRC(const string& filePath)
+	{
+		// Open the file
+		ifstream file(filePath, ios::binary);
+
+		if (!file.is_open())
+		{
+			cerr << "Error opening file: " << filePath << endl;
+			exit(1);
+		}
+
+		// Read file contents into a buffer
+		vector<char> buffer(std::istreambuf_iterator<char>(file), {});
+
+		// Calculate CRC
+		uint32_t crc = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
+
+		CRC = crc;
 	}
 
 	// methods such as getting the file metadata from file by using the file path 
@@ -373,77 +373,15 @@ int main(int argc, char* argv[])
 		printf("could not start connection on port %d\n", port);
 		return 1;
 	}
-
-	if (mode == Client) 
+		
+	if (mode == Client)
 	{
 		connection.Connect(address);
-
-		//// sending the file 
-		//ifstream file(arguments.filePath, ios::binary);
-		//if (!file.is_open())
-		//{
-		//	cerr << "Error: File: " << arguments.filePath << "can not be opened." << endl;
-		//	// exit if file cant be opened
-		//	return 1;
-		//}
-
-		//// calulate file size before chunking it and sending it 
-		//file.seekg(0, ios::end);
-		//size_t fileSize = file.tellg();
-		//file.seekg(0, ios::beg);
-
-		//unsigned char metadataPacket[PacketSize];
-
-		//vector<unsigned char> buffer(PacketSize);
-		//while (!file.eof())
-		//{
-		//	file.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
-		//	streamsize bytesRead = file.gcount();
-		//	if (bytesRead > 0)
-		//	{
-		//		connection.SendPacket(buffer.data(), bytesRead);
-		//	}
-		//}
-
-		//// close the file as transmission occurred 
-		//file.close();
 	}
 	else
 	{
-		//connection.Listen();
-
-		//bool fileReceived = false;
-		//vector<unsigned char> fileData;
-		//unsigned char packet[PacketSize];
-
-		//while (!fileReceived) {
-		//	int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-		//	if (bytes_read > 0) {
-		//		// received data appended to fileData 
-		//		fileData.insert(fileData.end(), packet, packet + bytes_read);
-		//	}
-		//	else {
-		//		// exit loop after all packets have been sent 
-		//		fileReceived = true;
-		//	}
-		//}
-
-		//// crc checked here post transmission 
-		//uint32_t receivedCRC = FileMetadata::calculateCRC(fileData.data(), fileData.size());
-
-		//// expected crc from client's side of the metadata sent 
-		//uint32_t expectedCRC = 0; // This should be extracted from the received metadata
-
-		//// Check if the CRCs match
-		//if (receivedCRC == expectedCRC) {
-		//	cout << "CRC values match correctly. File Successfully Received." << endl;
-		//}
-		//else {
-		//	cerr << "CRC values do not match. File Reception Failed." << endl;
-		//}
-
+		connection.Listen();
 	}
-		
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
@@ -481,42 +419,44 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		/*
-		*
-		* HERE WE WILL HAVE TO RETRIEVE THE FILE FROM DISK
-		* 
-		* THEN SEND THE FILE METADETA
-		* 
-		* THEN BREAK FILE INTO PIECES
-		* 
-		* THEN FINALLY SEND THE PIECES
-		* 
-		*/
-
-
-		// send and receive packets
-
-		sendAccumulator += DeltaTime;
-
-		while (sendAccumulator > 1.0f / sendRate)
+		
+		if (mode == Client)
 		{
-			unsigned char packet[PacketSize];
-			memset(packet, 0, sizeof(packet));
-			connection.SendPacket(packet, sizeof(packet));
-			sendAccumulator -= 1.0f / sendRate;
-		}
+			FileMetadata metadata(arguments.filePath);
+			// Read file from disk
+			ifstream file(arguments.filePath, ios::binary);
+			if (!file.is_open())
+			{
+				printf("Error: Unable to open file\n");
+				break;
+			}
 
-		/*
-		*
-		* HERE WE WILL RECIEVE THE FILE METADATA
-		* 
-		* THEN THE PIECES
-		* 
-		* WE WILL THEN WRITE THE PIECES TO DISK
-		* 
-		* AND FINALLY VERIFY THE FILE INTEGRITY 
-		* 
-		*/
+			// Extract file metadata
+			string fileName = metadata.fileName;
+			int fileSize = file.tellg();
+			metadata.calculateCRC(arguments.filePath); 
+
+			// Send file metadata
+			string MetaData = fileName + "|" + to_string(fileSize) + "|" + to_string(metadata.CRC);
+			connection.SendPacket(reinterpret_cast<const unsigned char*>(MetaData.c_str()), MetaData.length());
+
+			// Break file into pieces and send each piece
+			const int chunkSize = 256; 
+			char buffer[chunkSize];
+			while (file)
+			{
+				file.read(buffer, chunkSize);
+				int bytesRead = file.gcount();
+				if (bytesRead > 0)
+				{
+					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
+				}
+			}
+
+			// Send message indicating file transfer completion
+			string transferCompleteMessage = "File transfer complete";
+			connection.SendPacket(reinterpret_cast<const unsigned char*>(transferCompleteMessage.c_str()), transferCompleteMessage.length());
+		}
 
 		while (true)
 		{
@@ -525,7 +465,8 @@ int main(int argc, char* argv[])
 			if (bytes_read == 0)
 				break;
 
-			printf("Packet: %s\n", packet);
+			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
+			printf("Received data: %s\n", receivedData.c_str());
 		}
 
 		// show packets that were acked this frame
