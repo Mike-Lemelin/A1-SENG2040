@@ -377,10 +377,71 @@ int main(int argc, char* argv[])
 	if (mode == Client) 
 	{
 		connection.Connect(address);
+
+		//// sending the file 
+		//ifstream file(arguments.filePath, ios::binary);
+		//if (!file.is_open())
+		//{
+		//	cerr << "Error: File: " << arguments.filePath << "can not be opened." << endl;
+		//	// exit if file cant be opened
+		//	return 1;
+		//}
+
+		//// calulate file size before chunking it and sending it 
+		//file.seekg(0, ios::end);
+		//size_t fileSize = file.tellg();
+		//file.seekg(0, ios::beg);
+
+		//unsigned char metadataPacket[PacketSize];
+
+		//vector<unsigned char> buffer(PacketSize);
+		//while (!file.eof())
+		//{
+		//	file.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+		//	streamsize bytesRead = file.gcount();
+		//	if (bytesRead > 0)
+		//	{
+		//		connection.SendPacket(buffer.data(), bytesRead);
+		//	}
+		//}
+
+		//// close the file as transmission occurred 
+		//file.close();
 	}
 	else
 	{
-		connection.Listen();
+		//connection.Listen();
+
+		//bool fileReceived = false;
+		//vector<unsigned char> fileData;
+		//unsigned char packet[PacketSize];
+
+		//while (!fileReceived) {
+		//	int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+		//	if (bytes_read > 0) {
+		//		// received data appended to fileData 
+		//		fileData.insert(fileData.end(), packet, packet + bytes_read);
+		//	}
+		//	else {
+		//		// exit loop after all packets have been sent 
+		//		fileReceived = true;
+		//	}
+		//}
+
+		//// crc checked here post transmission 
+		//uint32_t receivedCRC = FileMetadata::calculateCRC(fileData.data(), fileData.size());
+
+		//// expected crc from client's side of the metadata sent 
+		//uint32_t expectedCRC = 0; // This should be extracted from the received metadata
+
+		//// Check if the CRCs match
+		//if (receivedCRC == expectedCRC) {
+		//	cout << "CRC values match correctly. File Successfully Received." << endl;
+		//}
+		//else {
+		//	cerr << "CRC values do not match. File Reception Failed." << endl;
+		//}
+
 	}
 		
 
