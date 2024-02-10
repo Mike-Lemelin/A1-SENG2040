@@ -393,6 +393,10 @@ int main(int argc, char* argv[])
 
 	bool loopFlag = true;
 
+	char filename[256];
+	int filesize;
+	long long int crc;
+
 	while (loopFlag)
 	{
 		// update flow control
@@ -458,6 +462,9 @@ int main(int argc, char* argv[])
 				int bytesRead = file.gcount();
 				if (bytesRead > 0)
 				{
+					///////////////////////////////////////////////////////////////
+					/////////////////////// MODIFY THIS ///////////////////////////
+					///////////////////////////////////////////////////////////////
 					// for the first byte change value that creates an error 
 					if (!deliberateError)
 					{
@@ -488,11 +495,6 @@ int main(int argc, char* argv[])
 			printf("Transfer Speed: %.2f megabits/secs\n", transferSpeed);
 		}
 
-		// not sure if we need to add a fileReceived bool for parsing received metadata 
-		// bool firstPacket = true;
-		// uint32_t expectedCRC = 0;
-		// vector<unsigned char> fileDataAccumulated;
-
 		while (true)
 		{
 			unsigned char packet[256];
@@ -503,14 +505,11 @@ int main(int argc, char* argv[])
 			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
 			printf("Received data: %s\n", receivedData.c_str());
 
-			char filename[256]; 
-			int filesize;
-			long long int crc; 
-
 			// Use sscanf to parse the incoming metadata
 			if (sscanf(receivedData.c_str(), "%255[^|]|%d|%lld", filename, &filesize, &crc) == 3) 
 			{
-				filename[bytes_read] = '\0'; // Null terminate filename
+				// Null-terminate the filename string
+				filename[sizeof(filename) - 1] = '\0';
 
 				// The string is formatted as metadata
 				printf("Filename: %s\n", filename);
@@ -519,17 +518,17 @@ int main(int argc, char* argv[])
 			}
 			else if (receivedData.compare(TRANSFER_COMPLETE) == 0)
 			{
-				break; // Break out of writing loop once file transfer is complete
+				break;
 			}
 			else
 			{
 				// Write the received data to an output file
-				ofstream outputFile("output.txt", ios::app); // Open the file in append mode
+				ofstream outputFile(filename, ios::app); // Open the file in append mode
 				if (outputFile.is_open()) 
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
 					outputFile.close();
-					printf("Received data written to output.txt\n");
+					printf("Received data written to %s\n", filename);
 				}
 				else 
 				{
