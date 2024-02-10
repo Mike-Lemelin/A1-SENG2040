@@ -177,7 +177,8 @@ private:
 				printf("  -f <file_path>: Specify the path to the file (required for client mode).\n");
 				printf("  -a <address>: Specify the IP address of the destination.\n");
 				printf("  -p <port>: Specify the port number.\n");
-				printf("  -h Display usage.\n");
+				printf("  -e: Enable error test to demonstrate whole-file error detection works.\n");
+				printf("  -h: Display usage.\n");
 
 				mode = VOID; // End program if user chooses to display usage
 			}
