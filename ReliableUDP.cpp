@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <ctime>
 
 #include "Net.h"
 #include "CRC.h"
@@ -436,6 +437,9 @@ int main(int argc, char* argv[])
 			int fileSize = file.tellg();
 			metadata.calculateCRC(arguments.filePath); 
 
+			// starting transmission timer 
+			clock_t startTimer = clock();
+
 			// Send file metadata
 			string MetaData = fileName + "|" + to_string(fileSize) + "|" + to_string(metadata.CRC);
 			connection.SendPacket(reinterpret_cast<const unsigned char*>(MetaData.c_str()), MetaData.length());
@@ -456,6 +460,18 @@ int main(int argc, char* argv[])
 			// Send message indicating file transfer completion
 			string transferCompleteMessage = "File transfer complete";
 			connection.SendPacket(reinterpret_cast<const unsigned char*>(transferCompleteMessage.c_str()), transferCompleteMessage.length());
+
+			// ending transmission timer 
+			clock_t endTimer = clock();
+
+			// calculation to get transmission time in sec 
+			double transmissionTime = double(endTimer - startTimer) / CLOCKS_PER_SEC;
+
+			// calculation to get transfer speed 
+			double transferSpeed = (fileSize * 8) / (transmissionTime * 1000000);
+
+			printf("Transmission Time: %.2f secs\n", transmissionTime);
+			printf("Transfer Speed: %.2f megabits/secs\n", transferSpeed);
 		}
 
 		while (true)
