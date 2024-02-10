@@ -132,6 +132,7 @@ struct CommandLineArg
 	string checksumMethod = "CRC32";
 	string address = "127.0.0.1"; // Default address
 	int port = 30000; // Default port
+	bool errorDetectTest = false; // flag to toggle the error detection test for CRC method 
 
 	// or initialize a constructor here with the default values 
 	CommandLineArg(int argc, char* argv[])
@@ -164,6 +165,10 @@ private:
 				string portStr = getNextArg(argc, argv, i);
 				port = stoi(portStr);
 			}
+			else if (arg == "-e")
+			{
+				errorDetectTest = true;
+			}
 			else if(arg == "-h")
 			{
 				printf("Usage: SENG2040-A1 -m <mode> -f <file_path> -a <address> -p <port>\n");
@@ -172,7 +177,8 @@ private:
 				printf("  -f <file_path>: Specify the path to the file (required for client mode).\n");
 				printf("  -a <address>: Specify the IP address of the destination.\n");
 				printf("  -p <port>: Specify the port number.\n");
-				printf("  -h Display usage.\n");
+				printf("  -e: Enable error test to demonstrate whole-file error detection works.\n");
+				printf("  -h: Display usage.\n");
 
 				mode = VOID; // End program if user chooses to display usage
 			}
@@ -457,11 +463,12 @@ int main(int argc, char* argv[])
 				int bytesRead = file.gcount();
 				if (bytesRead > 0)
 				{
-					///////////////////////////////////////////////////////////////
-					/////////////////////// MODIFY THIS ///////////////////////////
-					///////////////////////////////////////////////////////////////
 					// for the first byte change value that creates an error 
-					
+					if (arguments.errorDetectTest && !deliberateError)
+					{
+						buffer[0] ^= 0xff;
+						deliberateError = true;
+					}
 					// sending the pieces 
 					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
 				}
