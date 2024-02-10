@@ -394,6 +394,7 @@ int main(int argc, char* argv[])
 	bool loopFlag = true;
 
 	char filename[256];
+	char trueFilename[256];
 	int filesize;
 	long long int crc;
 
@@ -510,6 +511,7 @@ int main(int argc, char* argv[])
 			{
 				// Null-terminate the filename string
 				filename[sizeof(filename) - 1] = '\0';
+				strcpy(trueFilename, filename); // Copy the filename to avoid resetting filename after each loop iteration
 
 				// The string is formatted as metadata
 				printf("Filename: %s\n", filename);
@@ -523,16 +525,16 @@ int main(int argc, char* argv[])
 			else
 			{
 				// Write the received data to an output file
-				ofstream outputFile(filename, ios::app); // Open the file in append mode
+				ofstream outputFile(trueFilename, ios::app); // Open the file in append mode
 				if (outputFile.is_open()) 
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
 					outputFile.close();
-					printf("Received data written to %s\n", filename);
+					printf("Received data written to %s\n", trueFilename);
 				}
 				else 
 				{
-					printf("Error: Failed to open file: %s\n", filename);
+					printf("Error: Failed to open file: %s\n", trueFilename);
 				}
 			}
 		}
