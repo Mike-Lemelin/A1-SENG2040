@@ -18,6 +18,7 @@
 #define VOID "void"
 #define CLIENT "Client"
 #define SERVER "Server"
+#define TRANSFER_COMPLETE "complete"
 
 //#define SHOW_ACKS
 
@@ -390,7 +391,9 @@ int main(int argc, char* argv[])
 
 	FlowControl flowControl;
 
-	while (true)
+	bool loopFlag = true;
+
+	while (loopFlag)
 	{
 		// update flow control
 
@@ -466,8 +469,10 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			loopFlag = false; // End top loop once file transfer is complete
+
 			// Send message indicating file transfer completion
-			string transferCompleteMessage = "File transfer complete";
+			string transferCompleteMessage = TRANSFER_COMPLETE;
 			connection.SendPacket(reinterpret_cast<const unsigned char*>(transferCompleteMessage.c_str()), transferCompleteMessage.length());
 
 			// ending transmission timer 
@@ -498,18 +503,39 @@ int main(int argc, char* argv[])
 			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
 			printf("Received data: %s\n", receivedData.c_str());
 
-			//if (firstPacket) 
-			//{
-			//	// assume the first packet also is a string containing filename, size, crc calc
-			//	string receivedMetadata(packet, packet + bytes_read);
-			//	size_t lastPipePos = receivedMetadata.rfind('|');
-			//	expectedCRC = stoul(receivedMetadata.substr(lastPipePos + 1));
-			//	firstPacket = false;
-			//}
-			//else {
-			//	// Accumulate the data for CRC calculation
-			//	fileDataAccumulated.insert(fileDataAccumulated.end(), packet, packet + bytes_read);
-			//}
+			char filename[256]; 
+			int filesize;
+			long long int crc; 
+
+			// Use sscanf to parse the incoming metadata
+			if (sscanf(receivedData.c_str(), "%255[^|]|%d|%lld", filename, &filesize, &crc) == 3) 
+			{
+				filename[bytes_read] = '\0'; // Null terminate filename
+
+				// The string is formatted as metadata
+				printf("Filename: %s\n", filename);
+				printf("Filesize: %d\n", filesize);
+				printf("CRC: %lld\n", crc);
+			}
+			else if (receivedData.compare(TRANSFER_COMPLETE) == 0)
+			{
+				break; // Break out of writing loop once file transfer is complete
+			}
+			else
+			{
+				// Write the received data to an output file
+				ofstream outputFile("output.txt", ios::app); // Open the file in append mode
+				if (outputFile.is_open()) 
+				{
+					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
+					outputFile.close();
+					printf("Received data written to output.txt\n");
+				}
+				else 
+				{
+					printf("Error: Failed to open file: %s\n", filename);
+				}
+			}
 		}
 
 		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
