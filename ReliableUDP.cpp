@@ -461,11 +461,7 @@ int main(int argc, char* argv[])
 					/////////////////////// MODIFY THIS ///////////////////////////
 					///////////////////////////////////////////////////////////////
 					// for the first byte change value that creates an error 
-					if (!deliberateError)
-					{
-						buffer[0] ^= 0xff;
-						deliberateError = true;
-					}
+					
 					// sending the pieces 
 					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
 				}
