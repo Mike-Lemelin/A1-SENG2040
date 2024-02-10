@@ -143,12 +143,6 @@ private:
 
 	void parseArgs(int argc, char* argv[])
 	{
-		// for loop for each argument on the command line 
-			// add handlers for mode argument 
-			// add file handler 
-			// add crc handler 
-			// add default ip address handler 
-			// add default port handler 
 		for (int i = 1; i < argc; ++i)
 		{
 			string arg = argv[i];
@@ -442,7 +436,7 @@ int main(int argc, char* argv[])
 
 			// Extract file metadata
 			string fileName = metadata.fileName;
-			int fileSize = file.tellg();
+			int fileSize = metadata.fileSize;
 			metadata.calculateCRC(arguments.filePath); 
 
 			// starting transmission timer 
@@ -511,7 +505,7 @@ int main(int argc, char* argv[])
 			{
 				// Null-terminate the filename string
 				filename[sizeof(filename) - 1] = '\0';
-				strcpy(trueFilename, filename); // Copy the filename to avoid resetting filename after each loop iteration
+				strcpy(trueFilename, filename); // Copy the filename to avoid resetting it after each loop iteration
 
 				// The string is formatted as metadata
 				printf("Filename: %s\n", filename);
