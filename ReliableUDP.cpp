@@ -483,6 +483,11 @@ int main(int argc, char* argv[])
 			printf("Transfer Speed: %.2f megabits/secs\n", transferSpeed);
 		}
 
+		// not sure if we need to add a fileReceived bool for parsing received metadata 
+		// bool firstPacket = true;
+		// uint32_t expectedCRC = 0;
+		// vector<unsigned char> fileDataAccumulated;
+
 		while (true)
 		{
 			unsigned char packet[256];
@@ -492,7 +497,31 @@ int main(int argc, char* argv[])
 
 			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
 			printf("Received data: %s\n", receivedData.c_str());
+
+			//if (firstPacket) 
+			//{
+			//	// assume the first packet also is a string containing filename, size, crc calc
+			//	string receivedMetadata(packet, packet + bytes_read);
+			//	size_t lastPipePos = receivedMetadata.rfind('|');
+			//	expectedCRC = stoul(receivedMetadata.substr(lastPipePos + 1));
+			//	firstPacket = false;
+			//}
+			//else {
+			//	// Accumulate the data for CRC calculation
+			//	fileDataAccumulated.insert(fileDataAccumulated.end(), packet, packet + bytes_read);
+			//}
 		}
+
+		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
+
+		//if (calculatedCRC == expectedCRC) 
+		//{
+		//	printf("CRC check for File Integrity passed.\n");
+		//}
+		//else 
+		//{
+		//	printf("CRC check for File Integrity failed.\n");
+		//}
 
 		// show packets that were acked this frame
 
