@@ -132,6 +132,7 @@ struct CommandLineArg
 	string checksumMethod = "CRC32";
 	string address = "127.0.0.1"; // Default address
 	int port = 30000; // Default port
+	bool errorDetectTest = false; // flag to toggle the error detection test for CRC method 
 
 	// or initialize a constructor here with the default values 
 	CommandLineArg(int argc, char* argv[])
@@ -169,6 +170,10 @@ private:
 			{
 				string portStr = getNextArg(argc, argv, i);
 				port = stoi(portStr);
+			}
+			else if (arg == "-e")
+			{
+				errorDetectTest = true;
 			}
 			else if(arg == "-h")
 			{
@@ -462,11 +467,8 @@ int main(int argc, char* argv[])
 				int bytesRead = file.gcount();
 				if (bytesRead > 0)
 				{
-					///////////////////////////////////////////////////////////////
-					/////////////////////// MODIFY THIS ///////////////////////////
-					///////////////////////////////////////////////////////////////
 					// for the first byte change value that creates an error 
-					if (!deliberateError)
+					if (arguments.errorDetectTest && !deliberateError)
 					{
 						buffer[0] ^= 0xff;
 						deliberateError = true;
