@@ -447,12 +447,21 @@ int main(int argc, char* argv[])
 			// Break file into pieces and send each piece
 			const int chunkSize = 256; 
 			char buffer[chunkSize];
+			bool deliberateError = false; // Introduce an error to test Whole-File Error Detection Capabilities
+
 			while (file)
 			{
 				file.read(buffer, chunkSize);
 				int bytesRead = file.gcount();
 				if (bytesRead > 0)
 				{
+					// for the first byte change value that creates an error 
+					if (!deliberateError)
+					{
+						buffer[0] ^= 0xff;
+						deliberateError = true;
+					}
+					// sending the pieces 
 					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
 				}
 			}
@@ -468,7 +477,7 @@ int main(int argc, char* argv[])
 			double transmissionTime = double(endTimer - startTimer) / CLOCKS_PER_SEC;
 
 			// calculation to get transfer speed 
-			double transferSpeed = (fileSize * 8) / (transmissionTime * 1000000);
+			double transferSpeed = (metadata.fileSize * 8) / (transmissionTime * 1000000);
 
 			printf("Transmission Time: %.2f secs\n", transmissionTime);
 			printf("Transfer Speed: %.2f megabits/secs\n", transferSpeed);
