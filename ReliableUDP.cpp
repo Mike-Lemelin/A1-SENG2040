@@ -320,12 +320,12 @@ int main(int argc, char* argv[])
 	/*
 	*
 	* HERE WE HAVE TO RETRIEVE ADDITIONAL COMMAND LINE ARGUMENTS
-	* If Condition for mode == client 
+	* If Condition for mode == client
 	*	{ after serialization of metadata send file data }
-	* else if mode == server 
+	* else if mode == server
 	*	{ receive file metadata and associated data }
 	* return 0;
-	* 
+	*
 	*/
 
 	if (arguments.mode == VOID)
@@ -375,7 +375,7 @@ int main(int argc, char* argv[])
 		printf("could not start connection on port %d\n", port);
 		return 1;
 	}
-		
+
 	if (mode == Client)
 	{
 		connection.Connect(address);
@@ -431,7 +431,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		
+
 		if (mode == Client)
 		{
 			FileMetadata metadata(arguments.filePath);
@@ -446,7 +446,7 @@ int main(int argc, char* argv[])
 			// Extract file metadata
 			string fileName = metadata.fileName;
 			int fileSize = metadata.fileSize;
-			metadata.calculateCRC(arguments.filePath); 
+			metadata.calculateCRC(arguments.filePath);
 
 			// starting transmission timer 
 			clock_t startTimer = clock();
@@ -456,7 +456,7 @@ int main(int argc, char* argv[])
 			connection.SendPacket(reinterpret_cast<const unsigned char*>(MetaData.c_str()), MetaData.length());
 
 			// Break file into pieces and send each piece
-			const int chunkSize = 256; 
+			const int chunkSize = 256;
 			char buffer[chunkSize];
 			bool deliberateError = false; // Introduce an error to test Whole-File Error Detection Capabilities
 
@@ -472,7 +472,6 @@ int main(int argc, char* argv[])
 						buffer[0] ^= 0xff;
 						deliberateError = true;
 					}
-					
 					// sending the pieces 
 					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
 				}
@@ -507,22 +506,11 @@ int main(int argc, char* argv[])
 			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
 
 			// Use sscanf to parse the incoming metadata
-			if (sscanf(receivedData.c_str(), "%255[^|]|%d|%lld", filename, &filesize, &crc) == 3) 
+			if (sscanf(receivedData.c_str(), "%255[^|]|%d|%lld", filename, &filesize, &crc) == 3)
 			{
 				// Null-terminate the filename string
 				filename[sizeof(filename) - 1] = '\0';
 				strcpy(trueFilename, filename); // Copy the filename to avoid resetting it after each loop iteration
-
-				outputFile.open(trueFilename, ios::binary | ios::app); // Open the file in append mode
-				if (!outputFile.is_open())
-				{
-					printf("Error: Failed to open file: %s\n", filename);
-					break;
-				}
-				else
-				{
-					printf("Opened file: %s\n", filename);
-				}
 
 				// The string is formatted as metadata
 				printf("Filename: %s\n", filename);
@@ -536,17 +524,17 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				if (outputFile.is_open()) 
+				// Write the received data to an output file
+				ofstream outputFile(trueFilename, ios::binary | ios::app); // Open the file in append mode
+				if (outputFile.is_open())
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
 					outputFile.flush();
 					outputFile.close();
-					printf("Received data written to %s\n", trueFilename);
 				}
-				else 
+				else
 				{
 					printf("Error: Failed to open file: %s\n", trueFilename);
-					break;
 				}
 			}
 		}
@@ -554,9 +542,18 @@ int main(int argc, char* argv[])
 
 		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
 
+		if (transmissionCompleteFlag)
+		{
+			outputFile.close(); // Close file in output stream mode
+
+			ifstream outputFile(trueFilename, ios::binary); // Open file in input stream mode
+			if (outputFile.is_open())
+			{
+				// Read file contents into a buffer
+				vector<char> buffer(istreambuf_iterator<char>(outputFile), {});
+
 				// Calculate CRC
 				uint32_t calculatedCRC = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
-				printf("CRC: %u", calculatedCRC);
 
 				if (calculatedCRC == crc) // Check crc calculated from received file against crc in metadata
 				{
@@ -575,7 +572,6 @@ int main(int argc, char* argv[])
 			transmissionCompleteFlag = false;
 			outputFile.close();
 		}
-		// show packets that were acked this frame
 
 #ifdef SHOW_ACKS
 		unsigned int* acks = NULL;
@@ -618,7 +614,7 @@ int main(int argc, char* argv[])
 		}
 
 		net::wait(DeltaTime);
-	}
+		}
 
 	ShutdownSockets();
 

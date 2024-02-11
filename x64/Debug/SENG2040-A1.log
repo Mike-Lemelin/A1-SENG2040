@@ -1,1 +1,2 @@
-﻿
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5599,5): warning MSB3061: Unable to delete file "C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\A1\x64\Debug\SENG2040-A1.exe". Access to the path 'C:\Users\mikel\OneDrive - Conestoga College\SET Documents\YEAR 2\Semester 2\SENG2040\Assignments\A1\x64\Debug\SENG2040-A1.exe' is denied.
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppClean.targets(77,5): warning : Access to the path 'c:\users\mikel\onedrive - conestoga college\set documents\year 2\semester 2\seng2040\assignments\a1\x64\debug\seng2040-a1.exe' is denied.
