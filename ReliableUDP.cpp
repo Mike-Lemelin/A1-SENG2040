@@ -392,11 +392,14 @@ int main(int argc, char* argv[])
 	FlowControl flowControl;
 
 	bool loopFlag = true;
+	bool transmissionCompleteFlag = false;
 
 	char filename[256];
 	char trueFilename[256];
 	int filesize;
 	long long int crc;
+
+	ofstream outputFile;
 
 	while (loopFlag)
 	{
@@ -469,6 +472,7 @@ int main(int argc, char* argv[])
 						buffer[0] ^= 0xff;
 						deliberateError = true;
 					}
+					
 					// sending the pieces 
 					connection.SendPacket(reinterpret_cast<const unsigned char*>(buffer), bytesRead);
 				}
@@ -501,7 +505,6 @@ int main(int argc, char* argv[])
 				break;
 
 			string receivedData(reinterpret_cast<char*>(packet), bytes_read);
-			printf("Received data: %s\n", receivedData.c_str());
 
 			// Use sscanf to parse the incoming metadata
 			if (sscanf(receivedData.c_str(), "%255[^|]|%d|%lld", filename, &filesize, &crc) == 3) 
@@ -510,6 +513,17 @@ int main(int argc, char* argv[])
 				filename[sizeof(filename) - 1] = '\0';
 				strcpy(trueFilename, filename); // Copy the filename to avoid resetting it after each loop iteration
 
+				outputFile.open(trueFilename, ios::binary | ios::app); // Open the file in append mode
+				if (!outputFile.is_open())
+				{
+					printf("Error: Failed to open file: %s\n", filename);
+					break;
+				}
+				else
+				{
+					printf("Opened file: %s\n", filename);
+				}
+
 				// The string is formatted as metadata
 				printf("Filename: %s\n", filename);
 				printf("Filesize: %d\n", filesize);
@@ -517,36 +531,55 @@ int main(int argc, char* argv[])
 			}
 			else if (receivedData.compare(TRANSFER_COMPLETE) == 0)
 			{
-				break;
+				transmissionCompleteFlag = true;
+				break; // Break if transfer complete message is received
 			}
 			else
 			{
-				// Write the received data to an output file
-				ofstream outputFile(trueFilename, ios::app); // Open the file in append mode
 				if (outputFile.is_open()) 
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
-					outputFile.close();
-					printf("Received data written to %s\n", trueFilename);
 				}
 				else 
 				{
 					printf("Error: Failed to open file: %s\n", trueFilename);
+					break;
 				}
 			}
 		}
 
-		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
+		// If transmission is complete, compare CRCs
+		if (transmissionCompleteFlag) 
+		{
+			outputFile.close(); // Close file in output stream mode
 
-		//if (calculatedCRC == expectedCRC) 
-		//{
-		//	printf("CRC check for File Integrity passed.\n");
-		//}
-		//else 
-		//{
-		//	printf("CRC check for File Integrity failed.\n");
-		//}
+			ifstream outputFile(trueFilename, ios::binary); // Open file in input stream mode
+			if (outputFile.is_open())
+			{
+				// Read file contents into a buffer
+				vector<char> buffer(istreambuf_iterator<char>(outputFile), {});
 
+				// Calculate CRC
+				uint32_t calculatedCRC = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
+				printf("CRC: %u", calculatedCRC);
+
+				if (calculatedCRC == crc) // Check crc calculated from received file against crc in metadata
+				{
+					printf("CRC check for File Integrity passed.\n");
+				}
+				else
+				{
+					printf("CRC check for File Integrity failed.\n");
+				}
+			}
+			else
+			{
+				printf("Error: Failed to open file: %s\n", trueFilename);
+			}
+
+			transmissionCompleteFlag = false;
+			outputFile.close();
+		}
 		// show packets that were acked this frame
 
 #ifdef SHOW_ACKS
