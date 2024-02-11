@@ -539,6 +539,9 @@ int main(int argc, char* argv[])
 				if (outputFile.is_open()) 
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
+					outputFile.flush();
+					outputFile.close();
+					printf("Received data written to %s\n", trueFilename);
 				}
 				else 
 				{
@@ -548,16 +551,8 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// If transmission is complete, compare CRCs
-		if (transmissionCompleteFlag) 
-		{
-			outputFile.close(); // Close file in output stream mode
 
-			ifstream outputFile(trueFilename, ios::binary); // Open file in input stream mode
-			if (outputFile.is_open())
-			{
-				// Read file contents into a buffer
-				vector<char> buffer(istreambuf_iterator<char>(outputFile), {});
+		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
 
 				// Calculate CRC
 				uint32_t calculatedCRC = CRC::Calculate(buffer.data(), buffer.size(), CRC::CRC_32());
