@@ -526,6 +526,7 @@ int main(int argc, char* argv[])
 				if (outputFile.is_open()) 
 				{
 					outputFile.write(reinterpret_cast<const char*>(packet), bytes_read);
+					outputFile.flush();
 					outputFile.close();
 					printf("Received data written to %s\n", trueFilename);
 				}
@@ -535,6 +536,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+
 
 		//uint32_t calculatedCRC = CRC::Calculate(&fileDataAccumulated[0], fileDataAccumulateda.size(), CRC::CRC_32());
 
